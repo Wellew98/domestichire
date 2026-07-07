@@ -77,6 +77,11 @@ export async function initPgSchema() {
 }
 
 // ---- Worker helpers ----
+export function getDb() {
+  if (isProd) throw new Error("getDb() is not available in production. Use exported functions instead.");
+  return getSqlite();
+}
+
 export function getAllWorkers(filters?: Record<string, any>) {
   if (isProd) {
     return pgGetAllWorkers(filters);
