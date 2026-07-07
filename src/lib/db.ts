@@ -1,5 +1,6 @@
 // Database layer — SQLite (local) / PostgreSQL (Vercel)
 import path from "path";
+import { sql as pgSql } from "@vercel/postgres";
 
 const DB_PATH = path.join(process.cwd(), "marketplace.db");
 const isProd = !!process.env.POSTGRES_URL;
@@ -12,6 +13,17 @@ function getSqliteLib() {
     _Database = require("better-sqlite3");
   }
   return _Database;
+}
+
+function getSqlite(): any {
+  if (!_sqliteDb) {
+    const Database = getSqliteLib();
+    _sqliteDb = new Database(DB_PATH);
+    _sqliteDb.pragma("journal_mode = WAL");
+    _sqliteDb.pragma("foreign_keys = ON");
+    initSqliteSchema();
+  }
+  return _sqliteDb;
 }
 
 function initSqliteSchema() {
