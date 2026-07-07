@@ -57,15 +57,8 @@ export default function Navbar({ user }: NavbarProps) {
                 <span className="text-xs text-gray-500 hidden sm:inline">
                   {user.email}
                 </span>
-                <form action={"/api/auth/logout" as any}>
-                  <button
-                    className="text-sm font-medium text-red-600 hover:text-red-800"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                      window.location.href = "/";
-                    }}
-                  >
+                <form action="/api/auth/logout" method="GET">
+                  <button className="text-sm font-medium text-red-600 hover:text-red-800">
                     Logout
                   </button>
                 </form>
