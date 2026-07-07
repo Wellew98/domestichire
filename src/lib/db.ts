@@ -98,6 +98,7 @@ export function getAllWorkers(filters?: Record<string, any>) {
 }
 
 async function pgGetAllWorkers(filters?: Record<string, any>) {
+  await ensurePgSchema();
   let query = "SELECT * FROM workers WHERE 1=1";
   const params: any[] = [];
   let idx = 1;
