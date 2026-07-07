@@ -1,6 +1,6 @@
-import { getAllWorkers, getAllPayments, getAllEmployers, deleteWorker } from "@/lib/db";
+import { getAllWorkers, getAllPayments, getAllEmployers } from "@/lib/db";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import DeleteWorkerButton from "@/components/admin/DeleteWorkerButton";
 
 export const metadata = { title: "Admin Dashboard | DomesticHire" };
 
@@ -52,9 +52,7 @@ export default async function AdminPage() {
                   </td>
                   <td className="px-4 py-3">
                     <Link href={`/admin/workers/${w.id}/edit`} className="text-blue-600 hover:underline text-xs mr-3">Edit</Link>
-                    <form action={handleDelete.bind(null, w.id)} className="inline" onSubmit={(e: any) => { if (!confirm('Delete this worker?')) e.preventDefault() }}>
-                      <button type="submit" className="text-red-600 hover:underline text-xs">Delete</button>
-                    </form>
+                    <DeleteWorkerButton workerId={w.id} />
                   </td>
                 </tr>
               ))}
@@ -105,10 +103,4 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
       <p className="text-2xl font-bold text-gray-900">{value}</p>
     </div>
   );
-}
-
-async function handleDelete(workerId: number) {
-  "use server";
-  await deleteWorker(workerId);
-  redirect("/admin");
 }
