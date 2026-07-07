@@ -1,5 +1,7 @@
 "use client";
 
+import { deleteWorkerAction } from "@/app/admin/actions";
+
 interface Props {
   workerId: number;
 }
@@ -7,12 +9,7 @@ interface Props {
 export default function DeleteWorkerButton({ workerId }: Props) {
   return (
     <form
-      action={async () => {
-        const { deleteWorker } = await import("@/lib/db");
-        const { redirect } = await import("next/navigation");
-        await deleteWorker(workerId);
-        redirect("/admin");
-      }}
+      action={deleteWorkerAction.bind(null, workerId)}
       onSubmit={(e) => {
         if (!confirm("Delete this worker?")) e.preventDefault();
       }}
