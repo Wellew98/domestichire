@@ -132,12 +132,39 @@ export function insertWorker(data: any) {
 }
 
 async function pgInsertWorker(data: any) {
+  await ensurePgSchema();
   const { rows } = await pgSql`
     INSERT INTO workers (name, category, experience_years, expected_salary, skills, languages, live_in, location, available, description, phone, whatsapp, email, photo_url)
     VALUES (${data.name}, ${data.category}, ${data.experience_years}, ${data.expected_salary}, ${JSON.stringify(data.skills || [])}::jsonb, ${JSON.stringify(data.languages || [])}::jsonb, ${!!data.live_in}, ${data.location}, ${data.available !== 0}, ${data.description}, ${data.phone}, ${data.whatsapp}, ${data.email}, ${data.photo_url})
     RETURNING id
   `;
   return rows[0];
+}
+
+export function updateWorker(id: number, data: any) {
+  if (isProd) return pgUpdateWorker(id, data);
+  return getSqlite().prepare(`
+    UPDATE workers SET name=@name, category=@category, experience_years=@experience_years,
+    expected_salary=@expected_salary, skills=@skills, languages=@languages,
+    live_in=@live_in, location=@location, available=@available,
+    description=@description, phone=@phone, whatsapp=@whatsapp,
+    email=@email, photo_url=@photo_url, updated_at=datetime('now')
+    WHERE id=@id
+  `).run({ ...data, id });
+}
+
+async function pgUpdateWorker(id: number, data: any) {
+  await ensurePgSchema();
+  await pgSql`
+    UPDATE workers SET
+      name=${data.name}, category=${data.category}, experience_years=${data.experience_years},
+      expected_salary=${data.expected_salary}, skills=${JSON.stringify(data.skills || [])}::jsonb,
+      languages=${JSON.stringify(data.languages || [])}::jsonb, live_in=${!!data.live_in},
+      location=${data.location}, available=${data.available !== 0},
+      description=${data.description}, phone=${data.phone}, whatsapp=${data.whatsapp},
+      email=${data.email}, photo_url=${data.photo_url}, updated_at=NOW()
+    WHERE id=${id}
+  `;
 }
 
 export function insertEmployer(data: any) {

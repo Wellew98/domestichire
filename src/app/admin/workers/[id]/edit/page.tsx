@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db";
+import { getWorkerById, updateWorker } from "@/lib/db";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
@@ -11,18 +11,17 @@ export default async function EditWorkerPage({ params }: Props) {
   const workerId = parseInt(id);
   if (isNaN(workerId)) notFound();
 
-  const db = getDb();
-  const worker = db.prepare("SELECT * FROM workers WHERE id = ?").get(workerId) as any;
+  const worker = await getWorkerById(workerId);
   if (!worker) notFound();
 
-  const workerSkills: string[] = safeParse(worker.skills);
-  const workerLanguages: string[] = safeParse(worker.languages);
+  const workerSkills: string[] = worker.skills || [];
+  const workerLanguages: string[] = worker.languages || [];
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Worker</h1>
       <p className="text-gray-500 mb-8">Update {worker.name}'s profile.</p>
-      <form action={updateWorker.bind(null, workerId)} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <form action={handleUpdate.bind(null, workerId)} className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Name *</label><input type="text" name="name" defaultValue={worker.name} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
@@ -34,10 +33,10 @@ export default async function EditWorkerPage({ params }: Props) {
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Experience (years)</label><input type="number" name="experience_years" defaultValue={worker.experience_years} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Expected Salary ($)</label><input type="number" name="expected_salary" defaultValue={worker.expected_salary} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Arrangement</label>
-            <select name="live_in" defaultValue={worker.live_in} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"><option value="0">Live-out</option><option value="1">Live-in</option></select>
+            <select name="live_in" defaultValue={worker.live_in ? "1" : "0"} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"><option value="0">Live-out</option><option value="1">Live-in</option></select>
           </div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Available</label>
-            <select name="available" defaultValue={worker.available} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"><option value="1">Available</option><option value="0">Unavailable</option></select>
+            <select name="available" defaultValue={worker.available ? "1" : "0"} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"><option value="1">Available</option><option value="0">Unavailable</option></select>
           </div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label><input type="text" name="phone" defaultValue={worker.phone} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label><input type="text" name="whatsapp" defaultValue={worker.whatsapp} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
@@ -56,34 +55,17 @@ export default async function EditWorkerPage({ params }: Props) {
   );
 }
 
-function safeParse(str: any): string[] {
-  if (!str) return [];
-  try { return JSON.parse(str); } catch { return []; }
-}
-
-async function updateWorker(workerId: number, formData: FormData) {
+async function handleUpdate(workerId: number, formData: FormData) {
   "use server";
-  const db = getDb();
-
   const skills = (formData.get("skills") as string).split(",").map(s => s.trim()).filter(Boolean);
   const languages = (formData.get("languages") as string).split(",").map(s => s.trim()).filter(Boolean);
 
-  db.prepare(`
-    UPDATE workers SET
-      name=@name, category=@category, experience_years=@experience_years,
-      expected_salary=@expected_salary, skills=@skills, languages=@languages,
-      live_in=@live_in, location=@location, available=@available,
-      description=@description, phone=@phone, whatsapp=@whatsapp,
-      email=@email, photo_url=@photo_url, updated_at=datetime('now')
-    WHERE id=@id
-  `).run({
-    id: workerId,
+  await updateWorker(workerId, {
     name: formData.get("name"),
     category: formData.get("category"),
     experience_years: parseInt(formData.get("experience_years") as string) || 0,
     expected_salary: parseFloat(formData.get("expected_salary") as string) || 0,
-    skills: JSON.stringify(skills),
-    languages: JSON.stringify(languages),
+    skills, languages,
     live_in: parseInt(formData.get("live_in") as string) || 0,
     available: parseInt(formData.get("available") as string) || 0,
     location: formData.get("location"),

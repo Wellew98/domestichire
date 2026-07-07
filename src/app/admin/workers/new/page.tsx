@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db";
+import { insertWorker } from "@/lib/db";
 import Link from "next/link";
 
 const CATEGORIES = ["maid", "nanny", "driver", "gardener", "cleaner", "cook", "chef", "nurse_aide", "laundry"];
@@ -45,21 +45,15 @@ export default function NewWorkerPage() {
 async function createWorker(formData: FormData) {
   "use server";
   const { redirect } = await import("next/navigation");
-  const db = getDb();
-
   const skills = (formData.get("skills") as string).split(",").map(s => s.trim()).filter(Boolean);
   const languages = (formData.get("languages") as string).split(",").map(s => s.trim()).filter(Boolean);
 
-  db.prepare(`
-    INSERT INTO workers (name, category, experience_years, expected_salary, skills, languages, live_in, location, phone, whatsapp, email, photo_url, description, available)
-    VALUES (@name, @category, @experience_years, @expected_salary, @skills, @languages, @live_in, @location, @phone, @whatsapp, @email, @photo_url, @description, 1)
-  `).run({
+  await insertWorker({
     name: formData.get("name"),
     category: formData.get("category"),
     experience_years: parseInt(formData.get("experience_years") as string) || 0,
     expected_salary: parseFloat(formData.get("expected_salary") as string) || 0,
-    skills: JSON.stringify(skills),
-    languages: JSON.stringify(languages),
+    skills, languages,
     live_in: parseInt(formData.get("live_in") as string) || 0,
     location: formData.get("location"),
     phone: formData.get("phone"),
@@ -67,6 +61,7 @@ async function createWorker(formData: FormData) {
     email: (formData.get("email") as string) || "",
     photo_url: (formData.get("photo_url") as string) || "",
     description: (formData.get("description") as string) || "",
+    available: 1,
   });
 
   redirect("/admin");
