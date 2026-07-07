@@ -31,7 +31,7 @@ export default async function WorkersPage({
     liveIn: params.liveIn || "",
   };
 
-  const workers = getAllWorkers({
+  const workers = await getAllWorkers({
     category: filters.category || undefined,
     location: filters.location || undefined,
     minExperience: filters.minExperience ? parseInt(filters.minExperience) : undefined,

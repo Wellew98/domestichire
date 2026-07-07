@@ -35,7 +35,7 @@ async function handleLogin(formData: FormData) {
   const password = formData.get("password") as string;
 
   // Check employers first
-  const employer = getEmployerByEmail(email);
+  const employer = await getEmployerByEmail(email);
   if (employer) {
     const valid = await comparePassword(password, employer.password_hash);
     if (valid) {
@@ -47,7 +47,7 @@ async function handleLogin(formData: FormData) {
   }
 
   // Check admins
-  const admin = getAdminByEmail(email);
+  const admin = await getAdminByEmail(email);
   if (admin) {
     const valid = await comparePassword(password, admin.password_hash);
     if (valid) {

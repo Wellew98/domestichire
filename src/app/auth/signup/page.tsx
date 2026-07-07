@@ -39,12 +39,12 @@ async function handleSignUp(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
-  if (getEmployerByEmail(email)) {
+  if (await getEmployerByEmail(email)) {
     redirect("/auth/signup?error=exists");
   }
 
   const passwordHash = await hashPassword(password);
-  const employer = insertEmployer({ name, email, password_hash: passwordHash });
+  const employer = await insertEmployer({ name, email, password_hash: passwordHash });
 
   const token = signToken({ id: employer.id, email, role: "employer" });
   const cookieStore = await cookies();

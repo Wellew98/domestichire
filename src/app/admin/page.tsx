@@ -4,9 +4,9 @@ import Link from "next/link";
 export const metadata = { title: "Admin Dashboard | DomesticHire" };
 
 export default async function AdminPage() {
-  const workers = getAllWorkers();
-  const payments = getAllPayments();
-  const employers = getAllEmployers();
+  const workers = (await getAllWorkers()) as any[];
+  const payments = (await getAllPayments()) as any[];
+  const employers = (await getAllEmployers()) as any[];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">

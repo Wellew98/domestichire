@@ -11,7 +11,7 @@ export default async function PayWorkerPage({ params }: Props) {
   const workerId = parseInt(id);
   if (isNaN(workerId)) notFound();
 
-  const worker = getWorkerById(workerId);
+  const worker = await getWorkerById(workerId);
   if (!worker) notFound();
 
   // Require auth
@@ -21,7 +21,7 @@ export default async function PayWorkerPage({ params }: Props) {
   }
 
   // Check if already paid
-  if (getPaymentByEmployerAndWorker(user.id, workerId)) {
+  if (await getPaymentByEmployerAndWorker(user.id, workerId)) {
     redirect(`/workers/${workerId}`);
   }
 

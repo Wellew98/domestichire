@@ -55,32 +55,40 @@ function initSqliteSchema() {
   `);
 }
 
-// ---- Init PostgreSQL schema (run once on deploy) ----
-export async function initPgSchema() {
-  if (!isProd) return;
-  await pgSql`
-    CREATE TABLE IF NOT EXISTS workers (
-      id SERIAL PRIMARY KEY, name TEXT NOT NULL, photo_url TEXT DEFAULT '', category TEXT NOT NULL,
-      experience_years INTEGER DEFAULT 0, expected_salary REAL DEFAULT 0,
-      skills JSONB DEFAULT '[]', languages JSONB DEFAULT '[]',
-      live_in BOOLEAN DEFAULT false, location TEXT DEFAULT '', available BOOLEAN DEFAULT true,
-      description TEXT DEFAULT '', phone TEXT DEFAULT '', whatsapp TEXT DEFAULT '', email TEXT DEFAULT '',
-      created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS employers (
-      id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS payments (
-      id SERIAL PRIMARY KEY, employer_id INTEGER NOT NULL, worker_id INTEGER NOT NULL,
-      amount REAL NOT NULL, currency TEXT DEFAULT 'USD', status TEXT DEFAULT 'pending',
-      payment_ref TEXT UNIQUE, paystack_ref TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    CREATE TABLE IF NOT EXISTS admins (
-      id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-  `;
+// ---- Init PostgreSQL schema (auto-runs on first query) ----
+let _pgSchemaReady = false;
+
+async function ensurePgSchema() {
+  if (!isProd || _pgSchemaReady) return;
+  try {
+    await pgSql`SELECT 1 FROM workers LIMIT 1`;
+    _pgSchemaReady = true;
+  } catch {
+    await pgSql`
+      CREATE TABLE IF NOT EXISTS workers (
+        id SERIAL PRIMARY KEY, name TEXT NOT NULL, photo_url TEXT DEFAULT '', category TEXT NOT NULL,
+        experience_years INTEGER DEFAULT 0, expected_salary REAL DEFAULT 0,
+        skills JSONB DEFAULT '[]', languages JSONB DEFAULT '[]',
+        live_in BOOLEAN DEFAULT false, location TEXT DEFAULT '', available BOOLEAN DEFAULT true,
+        description TEXT DEFAULT '', phone TEXT DEFAULT '', whatsapp TEXT DEFAULT '', email TEXT DEFAULT '',
+        created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS employers (
+        id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS payments (
+        id SERIAL PRIMARY KEY, employer_id INTEGER NOT NULL, worker_id INTEGER NOT NULL,
+        amount REAL NOT NULL, currency TEXT DEFAULT 'USD', status TEXT DEFAULT 'pending',
+        payment_ref TEXT UNIQUE, paystack_ref TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS admins (
+        id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `;
+    _pgSchemaReady = true;
+  }
 }
 
 // ---- Worker helpers ----
@@ -156,6 +164,7 @@ export function insertEmployer(data: any) {
 }
 
 async function pgInsertEmployer(data: any) {
+  await ensurePgSchema();
   const { rows } = await pgSql`
     INSERT INTO employers (name, email, password_hash) VALUES (${data.name}, ${data.email}, ${data.password_hash}) RETURNING *
   `;
@@ -168,6 +177,7 @@ export function getEmployerByEmail(email: string) {
 }
 
 async function pgGetEmployerByEmail(email: string) {
+  await ensurePgSchema();
   const { rows } = await pgSql`SELECT * FROM employers WHERE email = ${email}`;
   return rows[0] || null;
 }

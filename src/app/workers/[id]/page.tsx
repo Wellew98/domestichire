@@ -17,7 +17,7 @@ export default async function WorkerProfilePage({ params }: Props) {
   const workerId = parseInt(id);
   if (isNaN(workerId)) notFound();
 
-  const worker = getWorkerById(workerId);
+  const worker = await getWorkerById(workerId);
   if (!worker) notFound();
 
   // Check if the current user has paid
@@ -25,7 +25,7 @@ export default async function WorkerProfilePage({ params }: Props) {
   let hasContactAccess = false;
 
   if (user && user.role === "employer") {
-    const payment = getPaymentByEmployerAndWorker(user.id, workerId);
+    const payment = await getPaymentByEmployerAndWorker(user.id, workerId);
     hasContactAccess = !!payment;
   }
 
