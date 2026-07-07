@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getWorkerById, getPaymentByEmployerAndWorker } from "@/lib/workers";
+import { getWorkerById, getPaymentByEmployerAndWorker } from "@/lib/db";
 import { getUser } from "@/lib/auth";
 
 const CATEGORY_LABELS: Record<string, string> = {

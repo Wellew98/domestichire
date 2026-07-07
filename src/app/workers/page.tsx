@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getAllWorkers } from "@/lib/workers";
+import { getAllWorkers } from "@/lib/db";
 import WorkerCard from "@/components/workers/WorkerCard";
 import FilterBar from "@/components/workers/FilterBar";
 
