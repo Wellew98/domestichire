@@ -64,29 +64,11 @@ async function ensurePgSchema() {
     await pgSql`SELECT 1 FROM workers LIMIT 1`;
     _pgSchemaReady = true;
   } catch {
-    await pgSql`
-      CREATE TABLE IF NOT EXISTS workers (
-        id SERIAL PRIMARY KEY, name TEXT NOT NULL, photo_url TEXT DEFAULT '', category TEXT NOT NULL,
-        experience_years INTEGER DEFAULT 0, expected_salary REAL DEFAULT 0,
-        skills JSONB DEFAULT '[]', languages JSONB DEFAULT '[]',
-        live_in BOOLEAN DEFAULT false, location TEXT DEFAULT '', available BOOLEAN DEFAULT true,
-        description TEXT DEFAULT '', phone TEXT DEFAULT '', whatsapp TEXT DEFAULT '', email TEXT DEFAULT '',
-        created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-      CREATE TABLE IF NOT EXISTS employers (
-        id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW()
-      );
-      CREATE TABLE IF NOT EXISTS payments (
-        id SERIAL PRIMARY KEY, employer_id INTEGER NOT NULL, worker_id INTEGER NOT NULL,
-        amount REAL NOT NULL, currency TEXT DEFAULT 'USD', status TEXT DEFAULT 'pending',
-        payment_ref TEXT UNIQUE, paystack_ref TEXT, created_at TIMESTAMPTZ DEFAULT NOW()
-      );
-      CREATE TABLE IF NOT EXISTS admins (
-        id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW()
-      );
-    `;
+    // Create tables one at a time (Neon rejects multi-statement queries)
+    await pgSql`CREATE TABLE IF NOT EXISTS workers (id SERIAL PRIMARY KEY, name TEXT NOT NULL, photo_url TEXT DEFAULT '', category TEXT NOT NULL, experience_years INTEGER DEFAULT 0, expected_salary REAL DEFAULT 0, skills JSONB DEFAULT '[]', languages JSONB DEFAULT '[]', live_in BOOLEAN DEFAULT false, location TEXT DEFAULT '', available BOOLEAN DEFAULT true, description TEXT DEFAULT '', phone TEXT DEFAULT '', whatsapp TEXT DEFAULT '', email TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`;
+    await pgSql`CREATE TABLE IF NOT EXISTS employers (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())`;
+    await pgSql`CREATE TABLE IF NOT EXISTS payments (id SERIAL PRIMARY KEY, employer_id INTEGER NOT NULL, worker_id INTEGER NOT NULL, amount REAL NOT NULL, currency TEXT DEFAULT 'USD', status TEXT DEFAULT 'pending', payment_ref TEXT UNIQUE, paystack_ref TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`;
+    await pgSql`CREATE TABLE IF NOT EXISTS admins (id SERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())`;
     _pgSchemaReady = true;
   }
 }
