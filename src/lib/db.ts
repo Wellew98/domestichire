@@ -167,6 +167,16 @@ async function pgUpdateWorker(id: number, data: any) {
   `;
 }
 
+export function deleteWorker(id: number) {
+  if (isProd) return pgDeleteWorker(id);
+  getSqlite().prepare("DELETE FROM workers WHERE id = ?").run(id);
+}
+
+async function pgDeleteWorker(id: number) {
+  await ensurePgSchema();
+  await pgSql`DELETE FROM workers WHERE id = ${id}`;
+}
+
 export function insertEmployer(data: any) {
   if (isProd) return pgInsertEmployer(data);
   const result = getSqlite().prepare("INSERT INTO employers (name, email, password_hash) VALUES (@name, @email, @password_hash)").run(data);
