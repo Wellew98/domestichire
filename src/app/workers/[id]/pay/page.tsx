@@ -26,7 +26,7 @@ export default async function PayWorkerPage({ params }: Props) {
   }
 
   // Get employer email for Paystack
-  const employer = getEmployerByEmail(user.email);
+  const employer = await getEmployerByEmail(user.email);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
