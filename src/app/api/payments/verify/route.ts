@@ -71,12 +71,12 @@ export async function POST(request: NextRequest) {
 
   if (event.event === "charge.success") {
     const reference = event.data.reference;
-    updatePaymentStatus(reference, "completed");
+    await updatePaymentStatus(reference, "completed");
 
-    const payment = getPaymentByRef(reference);
+    const payment = await getPaymentByRef(reference);
     if (payment) {
-      const employer = getEmployerById(payment.employer_id);
-      const worker = getWorkerById(payment.worker_id);
+      const employer = await getEmployerById(payment.employer_id);
+      const worker = await getWorkerById(payment.worker_id);
       if (employer && worker) {
         sendPaymentConfirmation(employer.email, employer.name, worker.name, payment.amount);
         sendAdminNotification(employer.name, worker.name, payment.amount, reference);
