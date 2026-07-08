@@ -1,10 +1,26 @@
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { getWorkerById, getPaymentByEmployerAndWorker, insertPayment, getEmployerByEmail } from "@/lib/db";
 import { requireAuth } from "@/lib/auth";
 import { initializePayment } from "@/lib/payments";
 import Link from "next/link";
 
 interface Props { params: Promise<{ id: string }>; }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const workerId = parseInt(id);
+  if (isNaN(workerId)) return { title: "Not Found" };
+
+  const worker = await getWorkerById(workerId);
+  if (!worker) return { title: "Not Found" };
+
+  return {
+    title: `Pay for ${worker.name}`,
+    description: `Complete payment to unlock ${worker.name}'s contact details — $${worker.expected_salary} one-time placement fee via Paystack.`,
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function PayWorkerPage({ params }: Props) {
   const { id } = await params;

@@ -1,10 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEmployerByEmail, insertEmployer } from "@/lib/db";
 import { hashPassword, signToken } from "@/lib/auth";
 
-export const metadata = { title: "Sign Up | DomesticHire" };
+export const metadata: Metadata = {
+  title: "Sign Up",
+  description: "Create a free DomesticHire account to browse domestic workers, pay placement fees, and unlock contact details.",
+  robots: { index: false, follow: false },
+};
 
 export default function SignUpPage() {
   return (

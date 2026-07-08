@@ -1,10 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getEmployerByEmail, getAdminByEmail } from "@/lib/db";
 import { hashPassword, comparePassword, signToken } from "@/lib/auth";
 
-export const metadata = { title: "Sign In | DomesticHire" };
+export const metadata: Metadata = {
+  title: "Sign In",
+  description: "Sign in to your DomesticHire account to hire domestic workers, manage payments, and access worker contact details.",
+  robots: { index: false, follow: false },
+};
 
 export default function LoginPage() {
   return (

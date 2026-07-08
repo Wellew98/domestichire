@@ -1,5 +1,9 @@
-export const metadata = {
-  title: "About Us | DomesticHire",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About Us",
+  description:
+    "DomesticHire connects Zimbabwean families with trusted, verified domestic workers. Learn about our mission to make hiring household help simple and transparent.",
 };
 
 export default function AboutPage() {

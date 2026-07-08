@@ -1,5 +1,9 @@
-export const metadata = {
-  title: "Our Services | DomesticHire",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Our Services",
+  description:
+    "DomesticHire connects you with skilled domestic workers across Zimbabwe — maids, nannies, drivers, gardeners, cooks, chefs, nurse aides, and cleaners.",
 };
 
 const SERVICES = [

@@ -1,5 +1,9 @@
-export const metadata = {
-  title: "Contact Us | DomesticHire",
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with DomesticHire in Harare, Zimbabwe. Reach us via WhatsApp, email, or visit our office. We're here to help you find trusted domestic workers.",
 };
 
 export default function ContactPage() {

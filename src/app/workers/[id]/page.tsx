@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getWorkerById, getPaymentByEmployerAndWorker } from "@/lib/db";
 import { getUser } from "@/lib/auth";
+import JsonLd, { breadcrumbSchema } from "@/components/JsonLd";
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://domestichire-psi.vercel.app";
 
 const CATEGORY_LABELS: Record<string, string> = {
   maid: "Maid", nanny: "Nanny", driver: "Driver", gardener: "Gardener",
@@ -12,6 +16,39 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const workerId = parseInt(id);
+  if (isNaN(workerId)) return { title: "Worker Not Found" };
+
+  const worker = await getWorkerById(workerId);
+  if (!worker) return { title: "Worker Not Found" };
+
+  const categoryLabel = CATEGORY_LABELS[worker.category] || worker.category;
+  const title = `${worker.name} — ${categoryLabel} in ${worker.location} | DomesticHire`;
+  const description = `${worker.name} is an experienced ${categoryLabel.toLowerCase()} in ${worker.location}, Zimbabwe. ${worker.experience_years} years experience. $${worker.expected_salary}/month. ${worker.live_in ? "Live-in." : "Live-out."} ${worker.description || ""}`.slice(0, 160);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${BASE_URL}/workers/${worker.id}`,
+      type: "profile",
+      images: worker.photo_url ? [{ url: worker.photo_url, width: 400, height: 400 }] : [],
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `${BASE_URL}/workers/${worker.id}`,
+    },
+  };
+}
+
 export default async function WorkerProfilePage({ params }: Props) {
   const { id } = await params;
   const workerId = parseInt(id);
@@ -19,6 +56,8 @@ export default async function WorkerProfilePage({ params }: Props) {
 
   const worker = await getWorkerById(workerId);
   if (!worker) notFound();
+
+  const categoryLabel = CATEGORY_LABELS[worker.category] || worker.category;
 
   // Check if the current user has paid
   const user = await getUser();
@@ -32,8 +71,16 @@ export default async function WorkerProfilePage({ params }: Props) {
   const skills: string[] = worker.skills || [];
   const languages: string[] = worker.languages || [];
 
+  const breadcrumb = breadcrumbSchema([
+    { name: "Home", url: BASE_URL },
+    { name: "Workers", url: `${BASE_URL}/workers` },
+    { name: worker.name, url: `${BASE_URL}/workers/${worker.id}` },
+  ]);
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <JsonLd data={breadcrumb} id="breadcrumb-schema" />
+
       <div className="mb-6">
         <Link href="/workers" className="text-sm text-blue-600 hover:underline">
           ← Back to Workers
@@ -53,7 +100,7 @@ export default async function WorkerProfilePage({ params }: Props) {
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-gray-900">{worker.name}</h1>
               <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                {CATEGORY_LABELS[worker.category] || worker.category}
+                {categoryLabel}
               </span>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${worker.available ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                 {worker.available ? "Available" : "Unavailable"}

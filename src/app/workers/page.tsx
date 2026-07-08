@@ -1,14 +1,26 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { getAllWorkers, countWorkers } from "@/lib/db";
 import WorkerCard from "@/components/workers/WorkerCard";
 import FilterBar from "@/components/workers/FilterBar";
 import Pagination from "@/components/workers/Pagination";
 
 const PER_PAGE = 20;
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://domestichire-psi.vercel.app";
 
-export const metadata = {
-  title: "Find Domestic Workers | DomesticHire",
-  description: "Browse our directory of verified domestic workers in Zimbabwe.",
+export const metadata: Metadata = {
+  title: "Find Domestic Workers",
+  description:
+    "Browse our directory of verified domestic workers in Zimbabwe. Filter by category, location, experience, and salary. Maids, nannies, drivers, gardeners, cooks, chefs, cleaners, nurse aides available.",
+  openGraph: {
+    title: "Find Domestic Workers in Zimbabwe | DomesticHire",
+    description:
+      "Browse verified domestic worker profiles. Filter by category, location, experience, and salary. Find maids, nannies, drivers, gardeners and more.",
+    url: `${BASE_URL}/workers`,
+  },
+  alternates: {
+    canonical: `${BASE_URL}/workers`,
+  },
 };
 
 interface SearchParams {
