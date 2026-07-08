@@ -17,13 +17,13 @@ export async function GET(request: NextRequest) {
 
   if (result.status && result.data?.status === "success") {
     // Update payment status in DB
-    updatePaymentStatus(reference, "completed");
+    await updatePaymentStatus(reference, "completed");
 
     // Get payment details for notifications
-    const payment = getPaymentByRef(reference);
+    const payment = await getPaymentByRef(reference);
     if (payment) {
-      const employer = getEmployerById(payment.employer_id);
-      const worker = getWorkerById(payment.worker_id);
+      const employer = await getEmployerById(payment.employer_id);
+      const worker = await getWorkerById(payment.worker_id);
 
       if (employer && worker) {
         // Fire notifications (don't await — non-blocking)

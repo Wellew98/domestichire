@@ -95,7 +95,7 @@ async function initPaystackPayment(
   const paymentRef = `DH-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
   // Save pending payment to DB
-  insertPayment({
+  await insertPayment({
     employer_id: employerId,
     worker_id: workerId,
     amount,
