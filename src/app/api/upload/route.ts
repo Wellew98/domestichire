@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     }
 
     const filename = `worker-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${file.type.split("/")[1]}`;
-    const blob = await put(filename, file, { access: "public" });
+    const blob = await put(filename, file, { access: "public" } as any);
 
     return NextResponse.json({ url: blob.url });
   } catch (error: any) {
