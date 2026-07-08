@@ -82,9 +82,11 @@ export async function getAllWorkers(filters?: Record<string, any>): Promise<any[
   if (filters?.available !== undefined) { query += " AND available = ?"; params.push(filters.available ? 1 : 0); }
   if (filters?.language) { query += " AND languages LIKE ?"; params.push(`%${filters.language}%`); }
   query += " ORDER BY created_at DESC";
-  const limit = filters?.limit || 20;
-  const offset = ((filters?.page || 1) - 1) * limit;
-  query += ` LIMIT ${limit} OFFSET ${offset}`;
+  if (filters?.page) {
+    const limit = filters?.limit || 20;
+    const offset = ((filters.page - 1) * limit);
+    query += ` LIMIT ${limit} OFFSET ${offset}`;
+  }
   return db.prepare(query).all(...params).map(formatWorker);
 }
 
@@ -186,10 +188,12 @@ async function pgGetAllWorkers(filters?: Record<string, any>) {
   if (filters?.available !== undefined) { query += ` AND available = $${idx++}`; params.push(filters.available); }
   if (filters?.language) { query += ` AND languages::text ILIKE $${idx++}`; params.push(`%${filters.language}%`); }
   query += " ORDER BY created_at DESC";
-  const limit = filters?.limit || 20;
-  const offset = ((filters?.page || 1) - 1) * limit;
-  query += ` LIMIT $${idx++} OFFSET $${idx++}`;
-  params.push(limit, offset);
+  if (filters?.page) {
+    const limit = filters?.limit || 20;
+    const offset = ((filters.page - 1) * limit);
+    query += ` LIMIT $${idx++} OFFSET $${idx++}`;
+    params.push(limit, offset);
+  }
   const { rows } = await pgSql.query(query, params);
   return rows.map(formatWorker);
 }
