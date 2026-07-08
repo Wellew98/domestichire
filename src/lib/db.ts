@@ -94,7 +94,22 @@ export function getAllWorkers(filters?: Record<string, any>) {
   if (filters?.available !== undefined) { query += " AND available = ?"; params.push(filters.available ? 1 : 0); }
   if (filters?.language) { query += " AND languages LIKE ?"; params.push(`%${filters.language}%`); }
   query += " ORDER BY created_at DESC";
+  const limit = filters?.limit || 20;
+  const offset = ((filters?.page || 1) - 1) * limit;
+  query += ` LIMIT ${limit} OFFSET ${offset}`;
   return db.prepare(query).all(...params).map(formatWorker);
+}
+
+export function countWorkers(filters?: Record<string, any>) {
+  if (isProd) return pgCountWorkers(filters);
+  const db = getSqlite();
+  let query = "SELECT COUNT(*) as total FROM workers WHERE 1=1";
+  const params: any[] = [];
+  if (filters?.category) { query += " AND category = ?"; params.push(filters.category); }
+  if (filters?.location) { query += " AND location LIKE ?"; params.push(`%${filters.location}%`); }
+  if (filters?.minExperience) { query += " AND experience_years >= ?"; params.push(filters.minExperience); }
+  if (filters?.maxSalary) { query += " AND expected_salary <= ?"; params.push(filters.maxSalary); }
+  return (db.prepare(query).get(...params) as any).total;
 }
 
 async function pgGetAllWorkers(filters?: Record<string, any>) {
@@ -110,8 +125,25 @@ async function pgGetAllWorkers(filters?: Record<string, any>) {
   if (filters?.available !== undefined) { query += ` AND available = $${idx++}`; params.push(filters.available); }
   if (filters?.language) { query += ` AND languages::text ILIKE $${idx++}`; params.push(`%${filters.language}%`); }
   query += " ORDER BY created_at DESC";
+  const limit = filters?.limit || 20;
+  const offset = ((filters?.page || 1) - 1) * limit;
+  query += ` LIMIT $${idx++} OFFSET $${idx++}`;
+  params.push(limit, offset);
   const { rows } = await pgSql.query(query, params);
   return rows.map(formatWorker);
+}
+
+async function pgCountWorkers(filters?: Record<string, any>) {
+  await ensurePgSchema();
+  let query = "SELECT COUNT(*) as total FROM workers WHERE 1=1";
+  const params: any[] = [];
+  let idx = 1;
+  if (filters?.category) { query += ` AND category = $${idx++}`; params.push(filters.category); }
+  if (filters?.location) { query += ` AND location ILIKE $${idx++}`; params.push(`%${filters.location}%`); }
+  if (filters?.minExperience) { query += ` AND experience_years >= $${idx++}`; params.push(filters.minExperience); }
+  if (filters?.maxSalary) { query += ` AND expected_salary <= $${idx++}`; params.push(filters.maxSalary); }
+  const { rows } = await pgSql.query(query, params);
+  return parseInt(rows[0].total);
 }
 
 export function getWorkerById(id: number) {

@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllWorkers } from "@/lib/db";
+import { getAllWorkers, countWorkers } from "@/lib/db";
 
-// GET /api/workers — list workers (public)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const category = searchParams.get("category") || undefined;
-  const location = searchParams.get("location") || undefined;
-  const minExperience = searchParams.get("minExperience") ? parseInt(searchParams.get("minExperience")!) : undefined;
-  const maxSalary = searchParams.get("maxSalary") ? parseInt(searchParams.get("maxSalary")!) : undefined;
+  const page = parseInt(searchParams.get("page") || "1") || 1;
+  const limit = 20;
 
-  const workers = getAllWorkers({
-    category,
-    location,
-    minExperience,
-    maxSalary,
-    available: true, // only show available workers via API
+  const filters: any = {
+    category: searchParams.get("category") || undefined,
+    location: searchParams.get("location") || undefined,
+    page,
+    limit,
+  };
+
+  const [workers, total] = await Promise.all([
+    getAllWorkers(filters),
+    countWorkers({ category: filters.category, location: filters.location }),
+  ]);
+
+  return NextResponse.json({
+    workers,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
   });
-
-  return NextResponse.json(workers);
 }

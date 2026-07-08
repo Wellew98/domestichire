@@ -1,7 +1,10 @@
 import { Suspense } from "react";
-import { getAllWorkers } from "@/lib/db";
+import { getAllWorkers, countWorkers } from "@/lib/db";
 import WorkerCard from "@/components/workers/WorkerCard";
 import FilterBar from "@/components/workers/FilterBar";
+import Pagination from "@/components/workers/Pagination";
+
+const PER_PAGE = 20;
 
 export const metadata = {
   title: "Find Domestic Workers | DomesticHire",
@@ -14,6 +17,7 @@ interface SearchParams {
   minExperience?: string;
   maxSalary?: string;
   liveIn?: string;
+  page?: string;
 }
 
 export default async function WorkersPage({
@@ -22,6 +26,24 @@ export default async function WorkersPage({
   searchParams: Promise<SearchParams>;
 }) {
   const params = await searchParams;
+  const page = parseInt(params.page || "1") || 1;
+
+  const dbFilters = {
+    category: params.category || undefined,
+    location: params.location || undefined,
+    minExperience: params.minExperience ? parseInt(params.minExperience) : undefined,
+    maxSalary: params.maxSalary ? parseInt(params.maxSalary) : undefined,
+    liveIn: params.liveIn === "1" ? true : params.liveIn === "0" ? false : undefined,
+    page,
+    limit: PER_PAGE,
+  };
+
+  const [workers, total] = await Promise.all([
+    getAllWorkers(dbFilters),
+    countWorkers({...dbFilters, page: undefined, limit: undefined}),
+  ]);
+
+  const totalPages = Math.ceil(total / PER_PAGE);
 
   const filters = {
     category: params.category || "",
@@ -31,29 +53,17 @@ export default async function WorkersPage({
     liveIn: params.liveIn || "",
   };
 
-  const workers = await getAllWorkers({
-    category: filters.category || undefined,
-    location: filters.location || undefined,
-    minExperience: filters.minExperience ? parseInt(filters.minExperience) : undefined,
-    maxSalary: filters.maxSalary ? parseInt(filters.maxSalary) : undefined,
-    liveIn:
-      filters.liveIn === "1" ? true : filters.liveIn === "0" ? false : undefined,
-  });
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Find Workers</h1>
         <p className="text-gray-500 mt-2">
-          Browse verified profiles of domestic workers across Zimbabwe.
+          {total} worker{total !== 1 ? "s" : ""} found
         </p>
       </div>
 
-      {/* Filters */}
       <FilterBar filters={filters} />
 
-      {/* Results */}
       <Suspense fallback={<div>Loading...</div>}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {workers.map((worker: any) => (
@@ -64,17 +74,16 @@ export default async function WorkersPage({
         {workers.length === 0 && (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No workers found
-            </h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">No workers found</h3>
             <p className="text-gray-500">
               Try adjusting your filters or{" "}
-              <a href="/workers" className="text-blue-600 hover:underline">
-                clear all filters
-              </a>
-              .
+              <a href="/workers" className="text-blue-600 hover:underline">clear all filters</a>.
             </p>
           </div>
+        )}
+
+        {totalPages > 1 && (
+          <Pagination currentPage={page} totalPages={totalPages} basePath="/workers" params={filters} />
         )}
       </Suspense>
     </div>
