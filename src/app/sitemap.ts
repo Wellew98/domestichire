@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 import { getAllWorkers } from "@/lib/db";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://domestichire-psi.vercel.app";
+const BASE_URL = (process.env.NEXT_PUBLIC_APP_URL || "https://domestichire-psi.vercel.app").replace(/\/+$/, "");
 
 const CITIES = ["harare", "bulawayo", "mutare", "gweru", "chitungwiza"];
 
