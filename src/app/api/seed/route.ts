@@ -44,6 +44,7 @@ function generateWorker(i: number) {
 export async function GET(request: NextRequest) {
   try {
     const count = parseInt(request.nextUrl.searchParams.get("count") || "200");
+    const force = request.nextUrl.searchParams.get("force") === "1";
 
     await sql`CREATE TABLE IF NOT EXISTS workers (id SERIAL PRIMARY KEY, name TEXT NOT NULL, photo_url TEXT DEFAULT '', category TEXT NOT NULL, experience_years INTEGER DEFAULT 0, expected_salary REAL DEFAULT 0, skills JSONB DEFAULT '[]', languages JSONB DEFAULT '[]', live_in BOOLEAN DEFAULT false, location TEXT DEFAULT '', available BOOLEAN DEFAULT true, description TEXT DEFAULT '', phone TEXT DEFAULT '', whatsapp TEXT DEFAULT '', email TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`;
     await sql`CREATE TABLE IF NOT EXISTS employers (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())`;
