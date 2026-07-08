@@ -42,8 +42,12 @@ export default async function WorkerProfilePage({ params }: Props) {
 
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-8 flex flex-col sm:flex-row gap-6 items-start">
-          <div className="w-32 h-32 bg-blue-200 rounded-xl flex items-center justify-center text-5xl text-blue-400 flex-shrink-0">
-            {worker.name.charAt(0)}
+          <div className="w-32 h-32 bg-blue-200 rounded-xl flex items-center justify-center text-5xl text-blue-400 flex-shrink-0 overflow-hidden">
+            {worker.photo_url ? (
+              <img src={worker.photo_url} alt={worker.name} className="w-full h-full object-cover" />
+            ) : (
+              worker.name.charAt(0)
+            )}
           </div>
           <div>
             <div className="flex items-center gap-3 mb-2">
