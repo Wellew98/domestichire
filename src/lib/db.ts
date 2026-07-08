@@ -9,9 +9,7 @@ let _sqliteDb: any = null;
 let _Database: any = null;
 
 function getSqliteLib() {
-  if (!_Database) {
-    _Database = require("better-sqlite3");
-  }
+  if (!_Database) _Database = require("better-sqlite3");
   return _Database;
 }
 
@@ -55,16 +53,12 @@ function initSqliteSchema() {
   `);
 }
 
-// ---- Init PostgreSQL schema (auto-runs on first query) ----
+// ---- PostgreSQL schema (auto-runs on first query) ----
 let _pgSchemaReady = false;
 
 async function ensurePgSchema() {
   if (!isProd || _pgSchemaReady) return;
-  try {
-    await pgSql`SELECT 1 FROM workers LIMIT 1`;
-    _pgSchemaReady = true;
-  } catch {
-    // Create tables one at a time (Neon rejects multi-statement queries)
+  try { await pgSql`SELECT 1 FROM workers LIMIT 1`; _pgSchemaReady = true; } catch {
     await pgSql`CREATE TABLE IF NOT EXISTS workers (id SERIAL PRIMARY KEY, name TEXT NOT NULL, photo_url TEXT DEFAULT '', category TEXT NOT NULL, experience_years INTEGER DEFAULT 0, expected_salary REAL DEFAULT 0, skills JSONB DEFAULT '[]', languages JSONB DEFAULT '[]', live_in BOOLEAN DEFAULT false, location TEXT DEFAULT '', available BOOLEAN DEFAULT true, description TEXT DEFAULT '', phone TEXT DEFAULT '', whatsapp TEXT DEFAULT '', email TEXT DEFAULT '', created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`;
     await pgSql`CREATE TABLE IF NOT EXISTS employers (id SERIAL PRIMARY KEY, name TEXT NOT NULL, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, created_at TIMESTAMPTZ DEFAULT NOW())`;
     await pgSql`CREATE TABLE IF NOT EXISTS payments (id SERIAL PRIMARY KEY, employer_id INTEGER NOT NULL, worker_id INTEGER NOT NULL, amount REAL NOT NULL, currency TEXT DEFAULT 'USD', status TEXT DEFAULT 'pending', payment_ref TEXT UNIQUE, paystack_ref TEXT, created_at TIMESTAMPTZ DEFAULT NOW())`;
@@ -73,16 +67,10 @@ async function ensurePgSchema() {
   }
 }
 
-// ---- Worker helpers ----
-export function getDb() {
-  if (isProd) throw new Error("getDb() is not available in production. Use exported functions instead.");
-  return getSqlite();
-}
+// =========== ALL EXPORTED FUNCTIONS ARE ASYNC ===========
 
-export function getAllWorkers(filters?: Record<string, any>) {
-  if (isProd) {
-    return pgGetAllWorkers(filters);
-  }
+export async function getAllWorkers(filters?: Record<string, any>): Promise<any[]> {
+  if (isProd) return pgGetAllWorkers(filters);
   const db = getSqlite();
   let query = "SELECT * FROM workers WHERE 1=1";
   const params: any[] = [];
@@ -100,7 +88,7 @@ export function getAllWorkers(filters?: Record<string, any>) {
   return db.prepare(query).all(...params).map(formatWorker);
 }
 
-export function countWorkers(filters?: Record<string, any>) {
+export async function countWorkers(filters?: Record<string, any>): Promise<number> {
   if (isProd) return pgCountWorkers(filters);
   const db = getSqlite();
   let query = "SELECT COUNT(*) as total FROM workers WHERE 1=1";
@@ -112,11 +100,84 @@ export function countWorkers(filters?: Record<string, any>) {
   return (db.prepare(query).get(...params) as any).total;
 }
 
+export async function getWorkerById(id: number): Promise<any> {
+  if (isProd) return pgGetWorkerById(id);
+  const w = getSqlite().prepare("SELECT * FROM workers WHERE id = ?").get(id) as any;
+  return w ? formatWorkerFull(w) : null;
+}
+
+export async function insertWorker(data: any): Promise<any> {
+  if (isProd) return pgInsertWorker(data);
+  return getSqlite().prepare(`INSERT INTO workers (name, category, experience_years, expected_salary, skills, languages, live_in, location, available, description, phone, whatsapp, email, photo_url) VALUES (@name, @category, @experience_years, @expected_salary, @skills, @languages, @live_in, @location, @available, @description, @phone, @whatsapp, @email, @photo_url)`).run(data);
+}
+
+export async function updateWorker(id: number, data: any): Promise<any> {
+  if (isProd) return pgUpdateWorker(id, data);
+  return getSqlite().prepare(`UPDATE workers SET name=@name, category=@category, experience_years=@experience_years, expected_salary=@expected_salary, skills=@skills, languages=@languages, live_in=@live_in, location=@location, available=@available, description=@description, phone=@phone, whatsapp=@whatsapp, email=@email, photo_url=@photo_url, updated_at=datetime('now') WHERE id=@id`).run({ ...data, id });
+}
+
+export async function deleteWorker(id: number): Promise<void> {
+  if (isProd) { await pgDeleteWorker(id); return; }
+  getSqlite().prepare("DELETE FROM workers WHERE id = ?").run(id);
+}
+
+export async function insertEmployer(data: any): Promise<any> {
+  if (isProd) return pgInsertEmployer(data);
+  const result = getSqlite().prepare("INSERT INTO employers (name, email, password_hash) VALUES (@name, @email, @password_hash)").run(data);
+  return getEmployerById(result.lastInsertRowid as number);
+}
+
+export async function getEmployerByEmail(email: string): Promise<any> {
+  if (isProd) return pgGetEmployerByEmail(email);
+  return (getSqlite().prepare("SELECT * FROM employers WHERE email = ?").get(email) as any) || null;
+}
+
+export async function getEmployerById(id: number): Promise<any> {
+  if (isProd) return pgGetEmployerById(id);
+  return (getSqlite().prepare("SELECT * FROM employers WHERE id = ?").get(id) as any) || null;
+}
+
+export async function insertPayment(data: any): Promise<any> {
+  if (isProd) return pgInsertPayment(data);
+  return getSqlite().prepare(`INSERT INTO payments (employer_id, worker_id, amount, currency, status, payment_ref, paystack_ref) VALUES (@employer_id, @worker_id, @amount, @currency, @status, @payment_ref, @paystack_ref)`).run(data);
+}
+
+export async function updatePaymentStatus(paymentRef: string, status: string, paystackRef?: string): Promise<void> {
+  if (isProd) { await pgUpdatePaymentStatus(paymentRef, status, paystackRef); return; }
+  getSqlite().prepare("UPDATE payments SET status = ?, paystack_ref = COALESCE(?, paystack_ref) WHERE payment_ref = ?").run(status, paystackRef || null, paymentRef);
+}
+
+export async function getPaymentByRef(paymentRef: string): Promise<any> {
+  if (isProd) return pgGetPaymentByRef(paymentRef);
+  return (getSqlite().prepare("SELECT * FROM payments WHERE payment_ref = ?").get(paymentRef) as any) || null;
+}
+
+export async function getPaymentByEmployerAndWorker(employerId: number, workerId: number): Promise<any> {
+  if (isProd) return pgGetPaymentByEmployerAndWorker(employerId, workerId);
+  return (getSqlite().prepare("SELECT * FROM payments WHERE employer_id = ? AND worker_id = ? AND status = 'completed'").get(employerId, workerId) as any) || null;
+}
+
+export async function getAllPayments(): Promise<any[]> {
+  if (isProd) return pgGetAllPayments();
+  return getSqlite().prepare(`SELECT p.*, w.name as worker_name, e.name as employer_name FROM payments p LEFT JOIN workers w ON p.worker_id = w.id LEFT JOIN employers e ON p.employer_id = e.id ORDER BY p.created_at DESC`).all();
+}
+
+export async function getAdminByEmail(email: string): Promise<any> {
+  if (isProd) return pgGetAdminByEmail(email);
+  return (getSqlite().prepare("SELECT * FROM admins WHERE email = ?").get(email) as any) || null;
+}
+
+export async function getAllEmployers(): Promise<any[]> {
+  if (isProd) return pgGetAllEmployers();
+  return getSqlite().prepare("SELECT * FROM employers ORDER BY created_at DESC").all();
+}
+
+// =========== PostgreSQL implementations ===========
+
 async function pgGetAllWorkers(filters?: Record<string, any>) {
   await ensurePgSchema();
   let query = "SELECT * FROM workers WHERE 1=1";
-  const params: any[] = [];
-  let idx = 1;
+  const params: any[] = []; let idx = 1;
   if (filters?.category) { query += ` AND category = $${idx++}`; params.push(filters.category); }
   if (filters?.location) { query += ` AND location ILIKE $${idx++}`; params.push(`%${filters.location}%`); }
   if (filters?.minExperience) { query += ` AND experience_years >= $${idx++}`; params.push(filters.minExperience); }
@@ -136,8 +197,7 @@ async function pgGetAllWorkers(filters?: Record<string, any>) {
 async function pgCountWorkers(filters?: Record<string, any>) {
   await ensurePgSchema();
   let query = "SELECT COUNT(*) as total FROM workers WHERE 1=1";
-  const params: any[] = [];
-  let idx = 1;
+  const params: any[] = []; let idx = 1;
   if (filters?.category) { query += ` AND category = $${idx++}`; params.push(filters.category); }
   if (filters?.location) { query += ` AND location ILIKE $${idx++}`; params.push(`%${filters.location}%`); }
   if (filters?.minExperience) { query += ` AND experience_years >= $${idx++}`; params.push(filters.minExperience); }
@@ -146,203 +206,22 @@ async function pgCountWorkers(filters?: Record<string, any>) {
   return parseInt(rows[0].total);
 }
 
-export function getWorkerById(id: number) {
-  if (isProd) return pgGetWorkerById(id);
-  const w = getSqlite().prepare("SELECT * FROM workers WHERE id = ?").get(id) as any;
-  return w ? formatWorkerFull(w) : null;
-}
-
-async function pgGetWorkerById(id: number) {
-  const { rows } = await pgSql`SELECT * FROM workers WHERE id = ${id}`;
-  return rows.length ? formatWorkerFull(rows[0]) : null;
-}
-
-// ---- Insert helpers ----
-export function insertWorker(data: any) {
-  if (isProd) return pgInsertWorker(data);
-  return getSqlite().prepare(`INSERT INTO workers (name, category, experience_years, expected_salary, skills, languages, live_in, location, available, description, phone, whatsapp, email, photo_url) VALUES (@name, @category, @experience_years, @expected_salary, @skills, @languages, @live_in, @location, @available, @description, @phone, @whatsapp, @email, @photo_url)`).run(data);
-}
-
-async function pgInsertWorker(data: any) {
-  await ensurePgSchema();
-  const { rows } = await pgSql`
-    INSERT INTO workers (name, category, experience_years, expected_salary, skills, languages, live_in, location, available, description, phone, whatsapp, email, photo_url)
-    VALUES (${data.name}, ${data.category}, ${data.experience_years}, ${data.expected_salary}, ${JSON.stringify(data.skills || [])}::jsonb, ${JSON.stringify(data.languages || [])}::jsonb, ${!!data.live_in}, ${data.location}, ${data.available !== 0}, ${data.description}, ${data.phone}, ${data.whatsapp}, ${data.email}, ${data.photo_url})
-    RETURNING id
-  `;
-  return rows[0];
-}
-
-export function updateWorker(id: number, data: any) {
-  if (isProd) return pgUpdateWorker(id, data);
-  return getSqlite().prepare(`
-    UPDATE workers SET name=@name, category=@category, experience_years=@experience_years,
-    expected_salary=@expected_salary, skills=@skills, languages=@languages,
-    live_in=@live_in, location=@location, available=@available,
-    description=@description, phone=@phone, whatsapp=@whatsapp,
-    email=@email, photo_url=@photo_url, updated_at=datetime('now')
-    WHERE id=@id
-  `).run({ ...data, id });
-}
-
-async function pgUpdateWorker(id: number, data: any) {
-  await ensurePgSchema();
-  await pgSql`
-    UPDATE workers SET
-      name=${data.name}, category=${data.category}, experience_years=${data.experience_years},
-      expected_salary=${data.expected_salary}, skills=${JSON.stringify(data.skills || [])}::jsonb,
-      languages=${JSON.stringify(data.languages || [])}::jsonb, live_in=${!!data.live_in},
-      location=${data.location}, available=${data.available !== 0},
-      description=${data.description}, phone=${data.phone}, whatsapp=${data.whatsapp},
-      email=${data.email}, photo_url=${data.photo_url}, updated_at=NOW()
-    WHERE id=${id}
-  `;
-}
-
-export function deleteWorker(id: number) {
-  if (isProd) return pgDeleteWorker(id);
-  getSqlite().prepare("DELETE FROM workers WHERE id = ?").run(id);
-}
-
-async function pgDeleteWorker(id: number) {
-  await ensurePgSchema();
-  await pgSql`DELETE FROM workers WHERE id = ${id}`;
-}
-
-export function insertEmployer(data: any) {
-  if (isProd) return pgInsertEmployer(data);
-  const result = getSqlite().prepare("INSERT INTO employers (name, email, password_hash) VALUES (@name, @email, @password_hash)").run(data);
-  return getEmployerById(result.lastInsertRowid as number);
-}
-
-async function pgInsertEmployer(data: any) {
-  await ensurePgSchema();
-  const { rows } = await pgSql`
-    INSERT INTO employers (name, email, password_hash) VALUES (${data.name}, ${data.email}, ${data.password_hash}) RETURNING *
-  `;
-  return rows[0];
-}
-
-export function getEmployerByEmail(email: string) {
-  if (isProd) return pgGetEmployerByEmail(email);
-  return (getSqlite().prepare("SELECT * FROM employers WHERE email = ?").get(email) as any) || null;
-}
-
-async function pgGetEmployerByEmail(email: string) {
-  await ensurePgSchema();
-  const { rows } = await pgSql`SELECT * FROM employers WHERE email = ${email}`;
-  return rows[0] || null;
-}
-
-export function getEmployerById(id: number) {
-  if (isProd) return pgGetEmployerById(id);
-  return (getSqlite().prepare("SELECT * FROM employers WHERE id = ?").get(id) as any) || null;
-}
-
-async function pgGetEmployerById(id: number) {
-  const { rows } = await pgSql`SELECT * FROM employers WHERE id = ${id}`;
-  return rows[0] || null;
-}
-
-export function insertPayment(data: any) {
-  if (isProd) return pgInsertPayment(data);
-  return getSqlite().prepare(`
-    INSERT INTO payments (employer_id, worker_id, amount, currency, status, payment_ref, paystack_ref)
-    VALUES (@employer_id, @worker_id, @amount, @currency, @status, @payment_ref, @paystack_ref)
-  `).run(data);
-}
-
-async function pgInsertPayment(data: any) {
-  return pgSql`
-    INSERT INTO payments (employer_id, worker_id, amount, currency, status, payment_ref, paystack_ref)
-    VALUES (${data.employer_id}, ${data.worker_id}, ${data.amount}, ${data.currency}, ${data.status}, ${data.payment_ref}, ${data.paystack_ref})
-  `;
-}
-
-export function updatePaymentStatus(paymentRef: string, status: string, paystackRef?: string) {
-  if (isProd) return pgUpdatePaymentStatus(paymentRef, status, paystackRef);
-  getSqlite().prepare("UPDATE payments SET status = ?, paystack_ref = COALESCE(?, paystack_ref) WHERE payment_ref = ?").run(status, paystackRef || null, paymentRef);
-}
-
-async function pgUpdatePaymentStatus(paymentRef: string, status: string, paystackRef?: string) {
-  await pgSql`UPDATE payments SET status = ${status}, paystack_ref = COALESCE(${paystackRef || null}, paystack_ref) WHERE payment_ref = ${paymentRef}`;
-}
-
-export function getPaymentByRef(paymentRef: string) {
-  if (isProd) return pgGetPaymentByRef(paymentRef);
-  return (getSqlite().prepare("SELECT * FROM payments WHERE payment_ref = ?").get(paymentRef) as any) || null;
-}
-
-async function pgGetPaymentByRef(paymentRef: string) {
-  const { rows } = await pgSql`SELECT * FROM payments WHERE payment_ref = ${paymentRef}`;
-  return rows[0] || null;
-}
-
-export function getPaymentByEmployerAndWorker(employerId: number, workerId: number) {
-  if (isProd) return pgGetPaymentByEmployerAndWorker(employerId, workerId);
-  return (getSqlite().prepare("SELECT * FROM payments WHERE employer_id = ? AND worker_id = ? AND status = 'completed'").get(employerId, workerId) as any) || null;
-}
-
-async function pgGetPaymentByEmployerAndWorker(empId: number, wkId: number) {
-  const { rows } = await pgSql`SELECT * FROM payments WHERE employer_id = ${empId} AND worker_id = ${wkId} AND status = 'completed'`;
-  return rows[0] || null;
-}
-
-export function getAllPayments() {
-  if (isProd) return pgGetAllPayments();
-  return getSqlite().prepare(`
-    SELECT p.*, w.name as worker_name, e.name as employer_name FROM payments p
-    LEFT JOIN workers w ON p.worker_id = w.id LEFT JOIN employers e ON p.employer_id = e.id
-    ORDER BY p.created_at DESC
-  `).all();
-}
-
-async function pgGetAllPayments() {
-  const { rows } = await pgSql`
-    SELECT p.*, w.name as worker_name, e.name as employer_name FROM payments p
-    LEFT JOIN workers w ON p.worker_id = w.id LEFT JOIN employers e ON p.employer_id = e.id
-    ORDER BY p.created_at DESC
-  `;
-  return rows;
-}
-
-export function getAdminByEmail(email: string) {
-  if (isProd) return pgGetAdminByEmail(email);
-  return (getSqlite().prepare("SELECT * FROM admins WHERE email = ?").get(email) as any) || null;
-}
-
-async function pgGetAdminByEmail(email: string) {
-  const { rows } = await pgSql`SELECT * FROM admins WHERE email = ${email}`;
-  return rows[0] || null;
-}
-
-export function getAllEmployers() {
-  if (isProd) return pgGetAllEmployers();
-  return getSqlite().prepare("SELECT * FROM employers ORDER BY created_at DESC").all();
-}
-
-async function pgGetAllEmployers() {
-  const { rows } = await pgSql`SELECT * FROM employers ORDER BY created_at DESC`;
-  return rows;
-}
+async function pgGetWorkerById(id: number) { const { rows } = await pgSql`SELECT * FROM workers WHERE id = ${id}`; return rows.length ? formatWorkerFull(rows[0]) : null; }
+async function pgInsertWorker(data: any) { await ensurePgSchema(); const { rows } = await pgSql`INSERT INTO workers (name, category, experience_years, expected_salary, skills, languages, live_in, location, available, description, phone, whatsapp, email, photo_url) VALUES (${data.name},${data.category},${data.experience_years},${data.expected_salary},${JSON.stringify(data.skills||[])}::jsonb,${JSON.stringify(data.languages||[])}::jsonb,${!!data.live_in},${data.location},${data.available!==0},${data.description},${data.phone},${data.whatsapp},${data.email},${data.photo_url}) RETURNING id`; return rows[0]; }
+async function pgUpdateWorker(id: number, data: any) { await ensurePgSchema(); await pgSql`UPDATE workers SET name=${data.name},category=${data.category},experience_years=${data.experience_years},expected_salary=${data.expected_salary},skills=${JSON.stringify(data.skills||[])}::jsonb,languages=${JSON.stringify(data.languages||[])}::jsonb,live_in=${!!data.live_in},location=${data.location},available=${data.available!==0},description=${data.description},phone=${data.phone},whatsapp=${data.whatsapp},email=${data.email},photo_url=${data.photo_url},updated_at=NOW() WHERE id=${id}`; }
+async function pgDeleteWorker(id: number) { await ensurePgSchema(); await pgSql`DELETE FROM workers WHERE id = ${id}`; }
+async function pgInsertEmployer(data: any) { await ensurePgSchema(); const { rows } = await pgSql`INSERT INTO employers (name, email, password_hash) VALUES (${data.name},${data.email},${data.password_hash}) RETURNING *`; return rows[0]; }
+async function pgGetEmployerByEmail(email: string) { await ensurePgSchema(); const { rows } = await pgSql`SELECT * FROM employers WHERE email = ${email}`; return rows[0] || null; }
+async function pgGetEmployerById(id: number) { const { rows } = await pgSql`SELECT * FROM employers WHERE id = ${id}`; return rows[0] || null; }
+async function pgInsertPayment(data: any) { return pgSql`INSERT INTO payments (employer_id, worker_id, amount, currency, status, payment_ref, paystack_ref) VALUES (${data.employer_id},${data.worker_id},${data.amount},${data.currency},${data.status},${data.payment_ref},${data.paystack_ref})`; }
+async function pgUpdatePaymentStatus(paymentRef: string, status: string, paystackRef?: string) { await pgSql`UPDATE payments SET status = ${status}, paystack_ref = COALESCE(${paystackRef||null}, paystack_ref) WHERE payment_ref = ${paymentRef}`; }
+async function pgGetPaymentByRef(paymentRef: string) { const { rows } = await pgSql`SELECT * FROM payments WHERE payment_ref = ${paymentRef}`; return rows[0] || null; }
+async function pgGetPaymentByEmployerAndWorker(empId: number, wkId: number) { const { rows } = await pgSql`SELECT * FROM payments WHERE employer_id = ${empId} AND worker_id = ${wkId} AND status = 'completed'`; return rows[0] || null; }
+async function pgGetAllPayments() { const { rows } = await pgSql`SELECT p.*, w.name as worker_name, e.name as employer_name FROM payments p LEFT JOIN workers w ON p.worker_id = w.id LEFT JOIN employers e ON p.employer_id = e.id ORDER BY p.created_at DESC`; return rows; }
+async function pgGetAdminByEmail(email: string) { const { rows } = await pgSql`SELECT * FROM admins WHERE email = ${email}`; return rows[0] || null; }
+async function pgGetAllEmployers() { const { rows } = await pgSql`SELECT * FROM employers ORDER BY created_at DESC`; return rows; }
 
 // ---- Formatters ----
-function formatWorker(w: any) {
-  return {
-    id: w.id, name: w.name, photo_url: w.photo_url || null, category: w.category,
-    experience_years: w.experience_years, expected_salary: w.expected_salary,
-    skills: safeJson(w.skills), languages: safeJson(w.languages),
-    live_in: !!w.live_in, location: w.location, available: !!w.available,
-    description: w.description || "", has_contact_access: false, created_at: w.created_at,
-  };
-}
-
-function formatWorkerFull(w: any) {
-  return { ...w, skills: safeJson(w.skills), languages: safeJson(w.languages), live_in: !!w.live_in, available: !!w.available };
-}
-
-function safeJson(v: any): any[] {
-  if (!v) return [];
-  if (Array.isArray(v)) return v;
-  try { return JSON.parse(v); } catch { return []; }
-}
+function formatWorker(w: any) { return { id: w.id, name: w.name, photo_url: w.photo_url || null, category: w.category, experience_years: w.experience_years, expected_salary: w.expected_salary, skills: safeJson(w.skills), languages: safeJson(w.languages), live_in: !!w.live_in, location: w.location, available: !!w.available, description: w.description || "", has_contact_access: false, created_at: w.created_at }; }
+function formatWorkerFull(w: any) { return { ...w, skills: safeJson(w.skills), languages: safeJson(w.languages), live_in: !!w.live_in, available: !!w.available }; }
+function safeJson(v: any): any[] { if (!v) return []; if (Array.isArray(v)) return v; try { return JSON.parse(v); } catch { return []; } }
