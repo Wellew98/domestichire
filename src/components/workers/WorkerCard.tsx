@@ -26,7 +26,7 @@ export default function WorkerCard({ worker }: { worker: PublicWorker }) {
         </div>
         <div className="flex flex-wrap gap-2 mb-2">
           <span className="text-sm text-gray-700 font-medium">💼 {worker.experience_years}y exp</span>
-          <span className="text-sm text-gray-700 font-medium">💰 ${worker.expected_salary}/mo</span>
+          <span className="text-sm text-gray-700 font-medium">💰 $20 placement fee</span>
           <span className="text-sm text-gray-700 font-medium">🏠 {worker.live_in ? "Live-in" : "Live-out"}</span>
         </div>
         <div className="text-sm font-medium text-gray-600">📍 {worker.location}</div>

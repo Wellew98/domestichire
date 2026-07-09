@@ -113,7 +113,7 @@ export default async function WorkerProfilePage({ params }: Props) {
 
         <div className="p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <DetailItem label="Experience" value={`${worker.experience_years} years`} />
-          <DetailItem label="Expected Salary" value={`$${worker.expected_salary}/month`} />
+          <DetailItem label="Placement Fee" value={`$${worker.expected_salary}`} />
           <DetailItem label="Arrangement" value={worker.live_in ? "Live-in" : "Live-out"} />
           <DetailItem label="Location" value={worker.location} />
 

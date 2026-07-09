@@ -5,7 +5,7 @@ import { sql } from "@vercel/postgres";
 const FIRST_NAMES = ["Precious","Tendai","Chiedza","Farai","Ruvimbo","Simba","Nyasha","Kudzai","Tatenda","Melody","Tafadzwa","Rudo","Tanaka","Blessing","Gift","Walter","Patience","Faith","Hope","Charity","Loveness","Shingai","Anesu","Kuda","Tsitsi"];
 const LAST_NAMES = ["Moyo","Dube","Makoni","Ncube","Chitando","Chirwa","Sibanda","Zhou","Hove","Ndlovu","Mlambo","Sithole","Gumbo","Banda","Phiri","Tshuma","Nyathi","Khumalo","Mpofu","Nkomo"];
 const CATEGORIES = ["maid","nanny","driver","gardener","cleaner","cook","chef","nurse_aide","laundry"];
-const LOCATIONS = ["Harare","Bulawayo","Mutare","Gweru","Kwekwe","Chitungwiza","Masvingo","Marondera","Kadoma","Chinhoyi"];
+const LOCATIONS = ["Khumalo","Suburbs","Burnside","Hillside","Famona","Malindela","Selbourne Park","Matsheumhlope","Montrose","Four Winds","Mahatshula","Woodville","Douglasdale","Kingsdale","Bradfield","Ilanda","Queens Park East","Queens Park West","Glencoe","Riverside"];
 const LANGUAGES = ["English","Shona","Ndebele","Chewa"];
 const SKILL_POOLS: Record<string, string[]> = {
   maid: ["Cleaning","Laundry","Ironing","Organization","Pet Care","Deep Cleaning"],
@@ -29,7 +29,7 @@ function generateWorker(i: number) {
   const langs = [rand(LANGUAGES), rand(LANGUAGES)].filter((v, i, a) => a.indexOf(v) === i);
   const location = rand(LOCATIONS);
   const exp = randInt(1, 15);
-  const salary = randInt(150, 500);
+  const salary = 20; // Fixed placement fee
   const liveIn = Math.random() > 0.5;
   const phone = `+26377${randInt(1000000, 9999999)}`;
 

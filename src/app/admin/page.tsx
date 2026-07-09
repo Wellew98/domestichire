@@ -33,7 +33,7 @@ export default async function AdminPage() {
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Name</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Category</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Location</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">Salary</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-500">Fee</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Status</th>
                 <th className="text-left px-4 py-3 font-medium text-gray-500">Actions</th>
               </tr>

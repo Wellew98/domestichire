@@ -70,7 +70,7 @@ export default function EditWorkerForm({ worker }: Props) {
           </div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Location *</label><input type="text" name="location" defaultValue={worker.location} required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Experience (years)</label><input type="number" name="experience_years" defaultValue={worker.experience_years} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Expected Salary ($)</label><input type="number" name="expected_salary" defaultValue={worker.expected_salary} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Placement Fee ($)</label><input type="number" name="expected_salary" defaultValue={worker.expected_salary} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Arrangement</label>
             <select name="live_in" defaultValue={worker.live_in ? "1" : "0"} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"><option value="0">Live-out</option><option value="1">Live-in</option></select>
           </div>

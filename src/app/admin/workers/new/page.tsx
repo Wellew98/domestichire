@@ -65,7 +65,7 @@ export default function NewWorkerPage() {
           </div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Location *</label><input type="text" name="location" required className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Experience (years)</label><input type="number" name="experience_years" defaultValue="0" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Expected Salary ($)</label><input type="number" name="expected_salary" defaultValue="0" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Placement Fee ($)</label><input type="number" name="expected_salary" defaultValue="20" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Arrangement</label>
             <select name="live_in" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"><option value="0">Live-out</option><option value="1">Live-in</option></select>
           </div>
