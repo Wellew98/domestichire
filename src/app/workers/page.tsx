@@ -69,7 +69,7 @@ export default async function WorkersPage({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Find Workers</h1>
-        <p className="text-gray-500 mt-2">
+        <p className="text-gray-700 text-lg mt-1 font-medium">
           {total} worker{total !== 1 ? "s" : ""} found
         </p>
       </div>
