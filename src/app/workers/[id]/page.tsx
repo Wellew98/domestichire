@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const categoryLabel = CATEGORY_LABELS[worker.category] || worker.category;
   const title = `${worker.name} — ${categoryLabel} in ${worker.location} | DomesticHire`;
-  const description = `${worker.name} is an experienced ${categoryLabel.toLowerCase()} in ${worker.location}, Zimbabwe. ${worker.experience_years} years experience. $${worker.expected_salary}/month. ${worker.live_in ? "Live-in." : "Live-out."} ${worker.description || ""}`.slice(0, 160);
+  const description = `${worker.name} is an experienced ${categoryLabel.toLowerCase()} in ${worker.location}, Bulawayo. ${worker.experience_years} years experience. $${worker.expected_salary} placement fee. ${worker.live_in ? "Live-in." : "Live-out."} ${worker.description || ""}`.slice(0, 160);
 
   return {
     title,

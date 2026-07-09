@@ -6,7 +6,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-3">DomesticHire</h3>
             <p className="text-sm">
-              Connecting Zimbabwean families with trusted domestic workers. Simple, transparent, reliable.
+              Connecting Bulawayo families with trusted domestic workers. Simple, transparent, reliable.
             </p>
           </div>
           <div>
@@ -23,7 +23,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>📧 info@domestichire.co.zw</li>
               <li>📱 WhatsApp: +263 77 000 0000</li>
-              <li>📍 Harare, Zimbabwe</li>
+              <li>📍 Bulawayo, Zimbabwe</li>
             </ul>
           </div>
         </div>

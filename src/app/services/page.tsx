@@ -1,9 +1,6 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Our Services",
-  description:
-    "DomesticHire connects you with skilled domestic workers across Zimbabwe — maids, nannies, drivers, gardeners, cooks, chefs, nurse aides, and cleaners.",
+export const metadata = {
+  title: "Our Services | DomesticHire",
+  description: "DomesticHire connects you with skilled domestic workers across Bulawayo suburbs.",
 };
 
 const SERVICES = [
@@ -20,7 +17,7 @@ export default function ServicesPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Services</h1>
       <p className="text-lg text-gray-500 mb-10">
-        We connect you with skilled domestic workers across all major categories.
+        We connect you with skilled domestic workers across all major categories in Bulawayo.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {SERVICES.map((s) => (
