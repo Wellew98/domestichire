@@ -1,53 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import type { Metadata } from "next";
 import { getWorkerById, getPaymentByEmployerAndWorker } from "@/lib/db";
 import { getUser } from "@/lib/auth";
-import JsonLd, { breadcrumbSchema } from "@/components/JsonLd";
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://domestichire-psi.vercel.app";
 
 const CATEGORY_LABELS: Record<string, string> = {
   maid: "Maid", nanny: "Nanny", driver: "Driver", gardener: "Gardener",
   cleaner: "Cleaner", cook: "Cook", chef: "Chef", nurse_aide: "Nurse Aide", laundry: "Laundry Helper",
 };
 
-interface Props {
-  params: Promise<{ id: string }>;
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
-  const workerId = parseInt(id);
-  if (isNaN(workerId)) return { title: "Worker Not Found" };
-
-  const worker = await getWorkerById(workerId);
-  if (!worker) return { title: "Worker Not Found" };
-
-  const categoryLabel = CATEGORY_LABELS[worker.category] || worker.category;
-  const title = `${worker.name} — ${categoryLabel} in ${worker.location} | DomesticHire`;
-  const description = `${worker.name} is an experienced ${categoryLabel.toLowerCase()} in ${worker.location}, Bulawayo. ${worker.experience_years} years experience. $${worker.expected_salary} placement fee. ${worker.live_in ? "Live-in." : "Live-out."} ${worker.description || ""}`.slice(0, 160);
-
-  return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      url: `${BASE_URL}/workers/${worker.id}`,
-      type: "profile",
-      images: worker.photo_url ? [{ url: worker.photo_url, width: 400, height: 400 }] : [],
-    },
-    twitter: {
-      card: "summary",
-      title,
-      description,
-    },
-    alternates: {
-      canonical: `${BASE_URL}/workers/${worker.id}`,
-    },
-  };
-}
+interface Props { params: Promise<{ id: string }> }
 
 export default async function WorkerProfilePage({ params }: Props) {
   const { id } = await params;
@@ -58,8 +19,6 @@ export default async function WorkerProfilePage({ params }: Props) {
   if (!worker) notFound();
 
   const categoryLabel = CATEGORY_LABELS[worker.category] || worker.category;
-
-  // Check if the current user has paid
   const user = await getUser();
   let hasContactAccess = false;
 
@@ -71,20 +30,10 @@ export default async function WorkerProfilePage({ params }: Props) {
   const skills: string[] = worker.skills || [];
   const languages: string[] = worker.languages || [];
 
-  const breadcrumb = breadcrumbSchema([
-    { name: "Home", url: BASE_URL },
-    { name: "Workers", url: `${BASE_URL}/workers` },
-    { name: worker.name, url: `${BASE_URL}/workers/${worker.id}` },
-  ]);
-
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <JsonLd data={breadcrumb} id="breadcrumb-schema" />
-
       <div className="mb-6">
-        <Link href="/workers" className="text-sm text-blue-600 hover:underline">
-          ← Back to Workers
-        </Link>
+        <Link href="/workers" className="text-sm text-blue-600 hover:underline">← Back to Workers</Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -99,14 +48,10 @@ export default async function WorkerProfilePage({ params }: Props) {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-3xl font-bold text-gray-900">{worker.name}</h1>
-              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                {categoryLabel}
-              </span>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${worker.available ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                {worker.available ? "Available" : "Unavailable"}
-              </span>
+              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">{categoryLabel}</span>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${worker.available ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{worker.available ? "Available" : "Unavailable"}</span>
             </div>
-            <p className="text-gray-500 mb-4">📍 {worker.location}</p>
+            <p className="text-gray-500 mb-4">📍 {worker.location}, Bulawayo</p>
             <p className="text-gray-700">{worker.description}</p>
           </div>
         </div>
@@ -116,23 +61,11 @@ export default async function WorkerProfilePage({ params }: Props) {
           <DetailItem label="Placement Fee" value={`$${worker.expected_salary}`} />
           <DetailItem label="Arrangement" value={worker.live_in ? "Live-in" : "Live-out"} />
           <DetailItem label="Location" value={worker.location} />
-
-          <div>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Skills</h4>
-            <div className="flex flex-wrap gap-1.5">
-              {skills.map((s: string) => (
-                <span key={s} className="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full">{s}</span>
-              ))}
-            </div>
+          <div><h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Skills</h4>
+            <div className="flex flex-wrap gap-1.5">{skills.map((s: string) => (<span key={s} className="bg-blue-50 text-blue-700 text-xs px-2.5 py-1 rounded-full">{s}</span>))}</div>
           </div>
-
-          <div>
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Languages</h4>
-            <div className="flex flex-wrap gap-1.5">
-              {languages.map((l: string) => (
-                <span key={l} className="bg-green-50 text-green-700 text-xs px-2.5 py-1 rounded-full">{l}</span>
-              ))}
-            </div>
+          <div><h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Languages</h4>
+            <div className="flex flex-wrap gap-1.5">{languages.map((l: string) => (<span key={l} className="bg-green-50 text-green-700 text-xs px-2.5 py-1 rounded-full">{l}</span>))}</div>
           </div>
         </div>
 
@@ -151,17 +84,11 @@ export default async function WorkerProfilePage({ params }: Props) {
               <div className="bg-gray-100 rounded-xl p-6 mb-4">
                 <div className="text-4xl mb-3">🔒</div>
                 <p className="text-gray-600 font-medium mb-1">Contact details are locked</p>
-                <p className="text-sm text-gray-400">Pay the one-time placement fee to unlock {worker.name}'s phone number, WhatsApp, and email.</p>
+                <p className="text-sm text-gray-400">Pay the one-time $20 placement fee to unlock {worker.name}'s phone number, WhatsApp, and email.</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link href={`/workers/${worker.id}/pay`} className="inline-flex items-center gap-2 bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-800 transition-colors">
-                  💳 Pay Placement Fee — ${worker.expected_salary}
-                </Link>
-                {!user && (
-                  <Link href="/auth/login" className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-gray-200 transition-colors">
-                    Sign in to pay
-                  </Link>
-                )}
+                <Link href={`/workers/${worker.id}/pay`} className="inline-flex items-center gap-2 bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-800 transition-colors">💳 Pay $20 — Unlock Contacts</Link>
+                {!user && (<Link href="/auth/login" className="inline-flex items-center gap-2 bg-gray-100 text-gray-700 font-semibold px-6 py-3 rounded-xl hover:bg-gray-200 transition-colors">Sign in to pay</Link>)}
               </div>
             </div>
           )}
@@ -172,10 +99,5 @@ export default async function WorkerProfilePage({ params }: Props) {
 }
 
 function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</h4>
-      <p className="text-gray-900 font-medium">{value}</p>
-    </div>
-  );
+  return <div><h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</h4><p className="text-gray-900 font-medium">{value}</p></div>;
 }
